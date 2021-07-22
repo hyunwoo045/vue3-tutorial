@@ -1,31 +1,3 @@
-# vue-style-loader 적용 안되는 이슈
-
-webpack.config.js 파일 내에 module 에서 css 파일에 대해 vue-style-loader 를 사용할 시 에러가 발생합니다.
-
-```
-Uncaught TypeError: Cannot read property 'locals' of undefined
-    at eval (App.vue?./node_modules/vue-style-loader/index.js!./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[6].use[0]:7)
-    at Object../node_modules/vue-style-loader/index.js!./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/dist/stylePostLoader.js!./node_modules/postcss-loader/dist/cjs.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/dist/index.js??ruleSet[1].rules[6].use[0]!./src/App.vue?vue&type=style&index=0&id=7ba5bd90&scoped=true&lang=css (main.js:572)
-    at __webpack_require__ (main.js:612)
-    at fn (main.js:823)
-    at eval (VM2330 App.vue:2)
-    at Module../src/App.vue?vue&type=style&index=0&id=7ba5bd90&scoped=true&lang=css (main.js:562)
-    at __webpack_require__ (main.js:612)
-    at fn (main.js:823)
-    at eval (VM2330 App.vue:4)
-    at Module../src/App.vue (main.js:529)
-```
-
-vue-style-loader 를 제외하면 정상적으로 동작하는 것을 확인하였습니다.
-
-<br/>
-
-https://github.com/vuejs/vue-style-loader/issues/56
-
-vue-loader@next 에서 더 이상 vue-style-loader 를 사용하지 않고 style-loader 만을 사용한다는 것으로 파악됩니다. (21.07.20 기준)
-
-<br/><br/>
-
 # 조건문
 
 ```html
@@ -125,3 +97,53 @@ App.vue
 - component 를 import 한다.
 - export default 내에서 components 객체를 생성하여 실제 component 를 선언해준다.
 - template 에서 컴포넌트 태그를 삽입하여 렌더링 한다.
+
+## 인스턴스와 라이프사이클
+
+https://v3.ko.vuejs.org/images/lifecycle.svg
+
+- 중요한 것은 created, mounted
+- created 는 인스턴스가 생성된 후에 동작하는 메서드
+- mounted 는 HTML 과 연결이 된 후 동작하는 메서드
+
+beforeCreate - created - beforeMount - mounted
+
+- beforeCreate 전에는 data 부분이 동작하기 전이므로 data 에서 설정한 스테이트들을 출력하면 undefined 가 출력된다.
+
+```html
+<script>
+  export default {
+    data() {
+      return {
+        count: 2
+      }
+    }
+    beforeCreate() {
+      console.log('Before Create!', this.count) // -> 'Before Create!' undefined
+    }
+    created() {
+      console.log('Created!', this.count) // 'Created!', 2
+    }
+  }
+</script>
+```
+
+- beforeMount 전에는 HTML 과 연결이 되기 전이므로 template 부분에 작성한 태그들을 출력해보면 null 이 출력된다.
+
+```html
+<template>
+  <h2>Hello</h2>
+</template>
+<script>
+  export default {
+    beforeMount() {
+      console.log(document.querySelector('h2')) // -> null
+    }
+    mounted() {
+      console.log(document.querySelector('h2')) // -> <h2> Hello</h2>
+    }
+  }
+</script>
+```
+
+- 당연히 beforeCreate, created 에서 querySelector 를 통해 태그를 가져오더라도 null 이 출력된다.
